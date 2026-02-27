@@ -6,16 +6,14 @@
 
 
 template <typename T, typename U>
-concept Mul = requires(T a, U b)
+concept Mul = requires(const T a,const U b)
 {
     { a * b } -> std::convertible_to<T>;
-    { a *= b } -> std::same_as<T&>;
 };
 
 template <typename T>
-concept Summable = requires(T a, T b)
+concept Summable = requires(T a,const T b)
 {
-    { a + b } -> std::convertible_to<T>;
     { a += b } -> std::same_as<T&>;
 };
 template <typename T>
@@ -31,11 +29,13 @@ public:
     // MyVector
     template <typename U>
         requires Mul<T, U>
-    MyVector<T> operator*(const U& scalar)
+    MyVector<T> operator*(const U& scalar) const
     {
-        auto res = MyVector<T>{ vec_ };
-        res *= scalar;
-        return res;
+	    std::vector<T> out;
+    out.reserve(vec_.size());
+    for (const auto& e : vec_)
+        out.push_back(e * scalar);
+    return MyVector<T>{ out };
     }
 
     // Multiplies all the element of the array by the scalar in place
@@ -43,9 +43,14 @@ public:
         requires Mul<T, U>
     MyVector<T>& operator*=(const U& scalar)
     {
-        for (auto& e : vec_)
+	    for (auto& e : vec_)
+    {
+        if constexpr (requires { e *= scalar; })
             e *= scalar;
-        return *this;
+        else
+            e = e * scalar;
+    }
+    return *this;
     }
 
     // Sums all the element in the vector to the init value, and returns the
