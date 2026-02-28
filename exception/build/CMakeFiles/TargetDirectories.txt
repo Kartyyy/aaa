@@ -1,3 +1,0 @@
-/mnt/c/Users/Karty/Desktop/afs/aaa/exception/build/CMakeFiles/main.dir
-/mnt/c/Users/Karty/Desktop/afs/aaa/exception/build/CMakeFiles/edit_cache.dir
-/mnt/c/Users/Karty/Desktop/afs/aaa/exception/build/CMakeFiles/rebuild_cache.dir

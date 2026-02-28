@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/main.dir/main.cc.o CMakeFiles/main.dir/player.cc.o CMakeFiles/main.dir/invalid_argument.cc.o CMakeFiles/main.dir/game.cc.o -o main 
