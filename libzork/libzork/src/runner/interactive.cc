@@ -5,7 +5,6 @@
 
 namespace libzork::runner
 {
-
     InteractiveRunner::InteractiveRunner(std::unique_ptr<story::Story> story,
                                          std::istream& is, std::ostream& os)
         : Runner(std::move(story))
@@ -19,35 +18,53 @@ namespace libzork::runner
         if (!cur)
             return;
 
-        os_ << cur->get_text();
-        if (!cur->get_text().empty() && cur->get_text().back() != '\n')
+        const std::string& txt = cur->get_text();
+        os_ << txt;
+        if (!txt.empty() && txt.back() != '\n')
             os_ << '\n';
+
+        os_ << "\n\n";
     }
 
     void InteractiveRunner::run()
     {
         while (true)
         {
-		print_script();
-        os_ << "> " << std::flush;
+            const story::Node* cur = story_->get_current();
+            if (!cur)
+                break;
 
-        try
-        {
-            process_input();
-        }
-        catch (const RunnerInterrupt& e)
-        {
-            os_ << e.what() << "\n";
-        }
-        catch (const RunnerQuit&)
-        {
-            break; // end
-        }
+            print_script();
 
-        if (!is_)
-            break;
+            if (cur->list_choices(true).empty())
+            {
+                os_ << "\n\n";
+                break;
+            }
 
-        os_ << '\n';
+            while (true)
+            {
+                os_ << "> " << std::flush;
+
+                try
+                {
+                    process_input();      
+                    os_ << '\n';         
+                    break;               
+                }
+                catch (const RunnerInterrupt& e)
+                {
+                    os_ << "\n[bad input] " << e.what() << "\n";
+                }
+                catch (const RunnerQuit&)
+                {
+                    os_ << "\n\n";
+                    return;
+                }
+
+                if (!is_)
+                    return;
+            }
         }
     }
 

@@ -18,8 +18,15 @@ namespace libzork::runner
 
     static bool is_stop(const std::string& t)
     {
-        return t == "the" || t == "a" || t == "an" || t == "to" || t == "in"
-            || t == "on" || t == "at";
+        if (t == "the" || t == "a" || t == "an" || t == "to" || t == "in"
+            || t == "on" || t == "at" || t == "of" || t == "and" || t == "or")
+            return true;
+
+        if (t == "ca" || t == "ça" || t == "ne" || t == "pas" || t == "en"
+            || t == "francais" || t == "français" || t == "marche")
+            return true;
+
+        return false;
     }
 
     SmartRunnerImpl::SmartRunnerImpl(std::unique_ptr<story::Story> story,
@@ -56,7 +63,7 @@ namespace libzork::runner
         }
         catch (const YAML::BadFile&)
         {
-		// no synonym file
+            // no synonym file
         }
     }
 
@@ -72,9 +79,14 @@ namespace libzork::runner
                 return;
 
             const std::string tok = lower(cur);
-            if (!is_stop(tok))
-                out.insert(tok);
 
+            if (tok.size() < 3 || is_stop(tok))
+            {
+                cur.clear();
+                return;
+            }
+
+            out.insert(tok);
             cur.clear();
         };
 
@@ -89,8 +101,9 @@ namespace libzork::runner
         return out;
     }
 
-    bool SmartRunnerImpl::matches_token(const std::unordered_set<std::string>& user_tokens,
-                                        const std::string& choice_token) const
+    bool SmartRunnerImpl::matches_token(
+        const std::unordered_set<std::string>& user_tokens,
+        const std::string& choice_token) const
     {
         if (user_tokens.contains(choice_token))
             return true;
@@ -109,8 +122,13 @@ namespace libzork::runner
         const std::unordered_set<std::string>& choice_tokens) const
     {
         for (const auto& t : choice_tokens)
+        {
+            if (t.size() < 3 || is_stop(t))
+                continue;
+
             if (!matches_token(user_tokens, t))
                 return true;
+        }
         return false;
     }
 
