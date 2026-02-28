@@ -52,22 +52,10 @@ namespace libzork::story
         return it->second;
     }
 
+
     std::ostream& StoryImpl::display(std::ostream& os) const
 {
-    os << "digraph story {\n";
-    for (const auto& n : nodes_)
-    {
-        const std::string& from = n->get_name();
-
-        for (std::size_t i = 0;; ++i)
-        {
-            const Node* tgt = n->get_choice(i, false);
-            if (!tgt)
-                break;
-            os << "\"" << from << "\" -> \"" << tgt->get_name() << "\";\n";
-        }
-    }
-    os << "}\n";
+    (void)os;
     return os;
 }
 

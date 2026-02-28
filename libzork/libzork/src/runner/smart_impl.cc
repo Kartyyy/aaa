@@ -9,10 +9,28 @@
 
 namespace libzork::runner
 {
+	 static bool ascii_isalnum(unsigned char c)
+    {
+        return (c >= '0' && c <= '9')
+            || (c >= 'A' && c <= 'Z')
+            || (c >= 'a' && c <= 'z');
+    }
+
+    static char ascii_tolower(unsigned char c)
+    {
+        if (c >= 'A' && c <= 'Z')
+            return static_cast<char>(c + ('a' - 'A'));
+        return static_cast<char>(c);
+    }
+
     static std::string lower(std::string s)
     {
-        for (char& c : s)
-            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        for (char& cc : s)
+        {
+            unsigned char uc = static_cast<unsigned char>(cc);
+            if (uc < 128)
+                cc = ascii_tolower(uc);
+        }
         return s;
     }
 
@@ -67,39 +85,43 @@ namespace libzork::runner
         }
     }
 
-    std::unordered_set<std::string>
-    SmartRunnerImpl::tokenize(const std::string& str) const
+
+std::unordered_set<std::string>
+SmartRunnerImpl::tokenize(const std::string& str) const
+{
+    std::unordered_set<std::string> out;
+    std::string cur;
+
+    auto flush = [&]()
     {
-        std::unordered_set<std::string> out;
-        std::string cur;
+        if (cur.empty())
+            return;
 
-        auto flush = [&]()
+        std::string tok = lower(cur);
+        cur.clear();
+
+        if (tok.size() < 3 || is_stop(tok))
+            return;
+
+        out.insert(std::move(tok));
+    };
+
+    for (unsigned char ch : str)
+    {
+        if (ch >= 128)
         {
-            if (cur.empty())
-                return;
-
-            const std::string tok = lower(cur);
-
-            if (tok.size() < 3 || is_stop(tok))
-            {
-                cur.clear();
-                return;
-            }
-
-            out.insert(tok);
-            cur.clear();
-        };
-
-        for (unsigned char ch : str)
-        {
-            if (std::isalnum(ch))
-                cur.push_back(static_cast<char>(ch));
-            else
-                flush();
+            flush();
+            continue;
         }
-        flush();
-        return out;
+
+        if (ascii_isalnum(ch))
+            cur.push_back(static_cast<char>(ch));
+        else
+            flush();
     }
+    flush();
+    return out;
+}
 
     bool SmartRunnerImpl::matches_token(
         const std::unordered_set<std::string>& user_tokens,

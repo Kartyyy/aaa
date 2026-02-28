@@ -3,16 +3,24 @@
 
 #include <libzork/vars/condition.hh>
 
+#include <string>
+
 namespace libzork::vars
 {
-
     class ConditionImpl : public Condition
     {
     public:
-        ~ConditionImpl() override = default;
+        ConditionImpl(const store::Store& store, std::string variable,
+                      std::string comparison, int value);
 
         bool apply() const override;
-    };
 
+    private:
+        const store::Store* store_;
+        std::string variable_;
+        std::string comparison_;
+        int value_;
+    };
 } // namespace libzork::vars
+
 #endif // !CONDITION_IMPL_HH

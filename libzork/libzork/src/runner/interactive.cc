@@ -13,59 +13,58 @@ namespace libzork::runner
     {}
 
     void InteractiveRunner::print_script() const
+{
+    const story::Node* cur = story_->get_current();
+    if (!cur)
+        return;
+
+    const std::string& txt = cur->get_text();
+    os_ << txt;
+    if (!txt.empty() && txt.back() != '\n')
+        os_ << '\n';
+}
+
+void InteractiveRunner::run()
+{
+    while (true)
     {
         const story::Node* cur = story_->get_current();
         if (!cur)
-            return;
+            break;
 
-        const std::string& txt = cur->get_text();
-        os_ << txt;
-        if (!txt.empty() && txt.back() != '\n')
+        print_script();
+
+        // end node
+        if (cur->list_choices(true).empty())
+        {
             os_ << '\n';
+            break;
+        }
 
-        os_ << "\n\n";
-    }
+        os_ << '\n'; // empty line before prompt/choices
 
-    void InteractiveRunner::run()
-    {
         while (true)
         {
-            const story::Node* cur = story_->get_current();
-            if (!cur)
-                break;
+            os_ << "> " << std::flush;
 
-            print_script();
-
-            if (cur->list_choices(true).empty())
+            try
             {
-                os_ << "\n\n";
+                process_input();
+                os_ << '\n';
                 break;
             }
-
-            while (true)
+            catch (const RunnerInterrupt& e)
             {
-                os_ << "> " << std::flush;
-
-                try
-                {
-                    process_input();      
-                    os_ << '\n';         
-                    break;               
-                }
-                catch (const RunnerInterrupt& e)
-                {
-                    os_ << "\n[bad input] " << e.what() << "\n";
-                }
-                catch (const RunnerQuit&)
-                {
-                    os_ << "\n\n";
-                    return;
-                }
-
-                if (!is_)
-                    return;
+                os_ << "\n[bad input] " << e.what() << "\n";
             }
+            catch (const RunnerQuit&)
+            {
+                os_ << '\n';
+                return;
+            }
+
+            if (!is_)
+                return;
         }
     }
-
-} // namespace libzork::runner
+}}

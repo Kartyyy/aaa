@@ -26,7 +26,6 @@ namespace libzork::story
     : name_(name)
     , text_(read_file(script_path))
 {
-std::cerr << "[DEBUG] loading " << script_path << "\n";
 }
 
     const std::string& NodeImpl::get_name() const
@@ -39,33 +38,44 @@ std::cerr << "[DEBUG] loading " << script_path << "\n";
         return text_;
     }
 
-    const Node* NodeImpl::get_choice(size_t index, bool check_conditions) const
-    {
-        (void)check_conditions;
-        if (index >= choices_.size())
-            return nullptr;
-        return choices_[index].target();
-    }
+	
+    const Node* NodeImpl::get_choice(std::size_t index, bool check_conditions) const
+{
+    std::size_t seen = 0;
 
-    std::vector<std::string> NodeImpl::list_choices(bool check_conditions) const
+    for (const auto& c : choices_)
     {
-        (void)check_conditions;
-        std::vector<std::string> res;
-        res.reserve(choices_.size());
-        for (const auto& c : choices_)
-            res.push_back(c.text());
-        return res;
-    }
+        if (check_conditions && !c.available())
+            continue;
 
-    void NodeImpl::add_choice(
-        const Node* other, const std::string& text,
-        std::vector<std::unique_ptr<vars::Condition>> conditions,
-        std::vector<std::unique_ptr<vars::Action>> actions)
-    {
-        (void)conditions;
-        (void)actions;
-	choices_.emplace_back(other, text);
+        if (seen == index)
+        {
+            c.execute();
+            return c.target();
+        }
+        ++seen;
     }
+    return nullptr;
+}
+
+std::vector<std::string> NodeImpl::list_choices(bool check_conditions) const
+{
+    std::vector<std::string> res;
+    for (const auto& c : choices_)
+    {
+        if (check_conditions && !c.available())
+            continue;
+        res.push_back(c.text());
+    }
+    return res;
+}
+
+void NodeImpl::add_choice(const Node* other, const std::string& text,
+                          std::vector<std::unique_ptr<vars::Condition>> conditions,
+                          std::vector<std::unique_ptr<vars::Action>> actions)
+{
+    choices_.emplace_back(other, text, std::move(conditions), std::move(actions));
+}
 
     const NodeImpl& to_impl(const Node& node)
     {
